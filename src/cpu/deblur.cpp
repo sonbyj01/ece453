@@ -42,7 +42,7 @@ std::vector<std::vector<std::vector<double>>> calculatePSF(std::vector<std::vect
 
 	for (unsigned j = 0; j< psf_init.size(); j++) {
 		for (unsigned k = 0; k< psf_init[0].size(); k++) {
-			temp = exp(-0.5 * (pow((j - mean_row) / sigma_row, 2.0) + pow((k - mean_col) / sigma_col, 2.0))) / (2* pi * sigma_row * sigma_col);
+			temp = exp(-0.5 * (pow((j - mean_row) / sigma_row, 2.0) + pow((k - mean_col) / sigma_col, 2.0))) / (2* PI * sigma_row * sigma_col);
 			sum += temp;
 			psf_init[j][k] = temp;
 		}
@@ -72,7 +72,7 @@ std::vector<std::vector<std::vector<double>>> calculatePSF(std::vector<std::vect
 			psf_hat[y][x][2] = psf_final[row][col][2];
 		}
 	}
-    
+
 	return psf_final;
 }
 
@@ -163,7 +163,7 @@ void elementWiseDiv(std::vector<std::vector<std::vector<double>>> &a, std::vecto
 }
 
 std::vector<std::vector<std::vector<double>>> convolve(std::vector<std::vector<std::vector<double>>> &src, std::vector<std::vector<std::vector<double>>> &kernel) {
-    std::vector<std::vector<std::vector<double>>> returnable(src.size(), std::vector<std::vector<double>> (src[0].size(), std::vector<double> (3, 0.0, 0
+    std::vector<std::vector<std::vector<double>>> returnable(src.size(), std::vector<std::vector<double>> (src[0].size(), std::vector<double> (3, 0.0)));
 
     int kernel_center_x = kernel[0].size() / 2;
     int kernel_center_y = kernel.size() / 2;
@@ -171,18 +171,18 @@ std::vector<std::vector<std::vector<double>>> convolve(std::vector<std::vector<s
     int columns = src[0].size();
 
     for(int i = 0; i < rows; i++) {
-        for(int j = 0; j < cols; j++) {
-            for(unsigned a = 0; a < kernel.size(); m++) {
-                for(unsigned b = 0; b < kernel[0].size(); n++) {
-                    int temp1 = i + (m - kernel_center_y);
-                    int temp2 = j + (n - kernel_center_x);
+        for(int j = 0; j < columns; j++) {
+            for(unsigned a = 0; a < kernel.size(); a++) {
+                for(unsigned b = 0; b < kernel[0].size(); b++) {
+                    int temp1 = i + (a - kernel_center_y);
+                    int temp2 = j + (b - kernel_center_x);
 
-                    if(temp1 >= 0 && temp1 < rows && temp2 >= 0 && temp2 < cols) {
+                    if(temp1 >= 0 && temp1 < rows && temp2 >= 0 && temp2 < columns) {
                         std::vector<double> temp(3, 0);
 
-                        returnable[i][j][0] += src[temp1][temp2][0] * kernel[m][n][0];
-                        returnable[i][j][1] += src[temp1][temp2][1] * kernel[m][n][1];
-                        returnable[i][j][2] += src[temp1][temp2][2] * kernel[m][n][2];
+                        returnable[i][j][0] += src[temp1][temp2][0] * kernel[a][b][0];
+                        returnable[i][j][1] += src[temp1][temp2][1] * kernel[a][b][1];
+                        returnable[i][j][2] += src[temp1][temp2][2] * kernel[a][b][2];
                     }
                 }
             }
@@ -194,7 +194,7 @@ std::vector<std::vector<std::vector<double>>> convolve(std::vector<std::vector<s
 int main(int argc, char *argv[]) {
     if(argc < 5) {
         std::cerr << "Usage: " << argv[0] << " [BLURRY IMAGE PNG FILE] [ORIGINAL IMAGE PNG FILE] [iterations] [OUTPUT FILE]" << std::endl;
-        exit(-1)
+        exit(-1);
     }
 
     const char *blurryfile = argv[1];
@@ -202,7 +202,7 @@ int main(int argc, char *argv[]) {
     int iterations = atoi(argv[3]);
     const char *fileout = argv[4];
 
-    unsigned blury_w, blurry_h, orig_w, orig_h;
+    unsigned blurry_w, blurry_h, orig_w, orig_h;
 
     std::vector<double> img = decodePNG(blurryfile, blurry_w, blurry_h);
     std::vector<double> ref = decodePNG(origfile, orig_w, orig_h);
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]) {
     std::vector<int> ref_int(ref.begin(), ref.end());
 
     std::vector<std::vector<std::vector<double>>> final_rgb_img;
-    final_rgb_img.resize(h_blurry);
+    final_rgb_img.resize(blurry_h);
 
     std::vector<std::vector<double>> initial = convert2D(img, blurry_w * 3, blurry_h);
 
@@ -234,10 +234,9 @@ int main(int argc, char *argv[]) {
         std::vector<std::vector<std::vector<double>>> error_est = convolve(relative_blur, psf_hat);
         elementWiseMul(temp, error_est, latent_est);
     }
-    auto stop std::chrono::high_resolution_clock::now();
+    auto stop = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds> (stop - start);
-    std::cout << "Elapsed time (ms): " << duration.count() << std::endl;
 
     std::vector<unsigned char> est1D; 
     std::vector<int> est1D_without_alpha;
@@ -248,13 +247,14 @@ int main(int argc, char *argv[]) {
 
     for(unsigned i = 0; i < est1D.size(); i++) {
         if(i % 4 != 3) {
-            est1D)without_alpha.push_back((int)est1D[i]);
+            est1D_without_alpha.push_back((int)est1D[i]);
         }
     }
 
-    std::cout << "The blurry MSE is " << _mse(img_int, blurry_w, Blurry_h, ref_int) << std::endl;
-    std::cout << "The blurry pSNR is " << psnr(img_int, blurry_w, Blurry_h, ref_int) << std::endl;
-    std::cout << "The estimated MSE is " << _mse(est1D_without_alpha, blurry_w, Blurry_h, ref_int) << std::endl;
-    std::cout << "The estimated pSNR is " << psnr(est1D_without_alpha, blurry_w, Blurry_h, ref_int) << std::endl;
+    std::cout << "Blurry MSE: " << _mse(img_int, blurry_w, blurry_h, ref_int) << std::endl;
+    std::cout << "Blurry pSNR: " << psnr(img_int, blurry_w, blurry_h, ref_int) << std::endl;
+    std::cout << "Deblur MSE: " << _mse(est1D_without_alpha, blurry_w, blurry_h, ref_int) << std::endl;
+    std::cout << "Deblur pSNR: " << psnr(est1D_without_alpha, blurry_w, blurry_h, ref_int) << std::endl;
+    std::cout << "Elapsed time (ms): " << duration.count() << std::endl;
     return 0;
 }
